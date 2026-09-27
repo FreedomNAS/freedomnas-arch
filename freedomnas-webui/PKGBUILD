@@ -11,6 +11,7 @@ license=('MPL-2.0')
 depends=(
     'freedomnas-core'
     'freedomnas-profiles'
+    'freedomnas-docs'
     'python'
     'python-fastapi'
     'uvicorn'
@@ -40,6 +41,7 @@ package() {
 
     install -d "${pkgdir}/usr/lib/freedomnas/webui"
     cp -r api frontend websocket "${pkgdir}/usr/lib/freedomnas/webui/"
+    echo "${pkgver}" > "${pkgdir}/usr/lib/freedomnas/webui/VERSION"
 
     # firstboot.sh and supervisor.sh are shared verbatim with the image
     # builder and live in freedomnas-profiles/assets: symlink rather than

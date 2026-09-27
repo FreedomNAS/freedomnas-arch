@@ -5,7 +5,7 @@ Codeberg's Arch package registry. `freedomnas-deb` is the Debian counterpart.
 
 | Package | Source |
 |---------|--------|
-| `freedomnas-core`, `freedomnas-profiles`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch (`dev` by default, `FREEDOMNAS_REF` to change it) |
+| `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch (`dev` by default, `FREEDOMNAS_REF` to change it) |
 | `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
 
 ## Versions
@@ -14,6 +14,11 @@ A component built from `dev` is a snapshot, `1.0+<commit date and time>.<commit>
 so every change gets a version of its own; built from `main` it is the base
 version the PKGBUILD names (`_basever`). `1.0+...` sorts after `1.0` and
 before `1.1`.
+
+`freedomnas-docs` is the documentation built with Arch's own `mkdocs` and
+`mkdocs-material`, installed in `/usr/lib/freedomnas/docs` for the WebUI to
+serve offline; `freedomnas-webui` depends on it and writes its own version to
+`webui/VERSION`, which the documentation compares with its own.
 
 ## linux-freedomnas
 

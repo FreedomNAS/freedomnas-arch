@@ -28,7 +28,7 @@ jobs:
 
       - name: Build the components
         run: |
-          for pkg in freedomnas-profiles freedomnas-core freedomnas-webui freedomnas-installer; do
+          for pkg in freedomnas-profiles freedomnas-core freedomnas-docs freedomnas-webui freedomnas-installer; do
             sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
           done
 

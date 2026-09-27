@@ -1,0 +1,38 @@
+# Maintainer: FreedomNAS Team <dev@freedomnas.io>
+pkgname=freedomnas-docs
+_basever=1.0
+_ref=${FREEDOMNAS_REF:-dev}
+pkgver=1.0
+pkgrel=1
+pkgdesc="FreedomNAS documentation, for reading offline in the WebUI"
+arch=('any')
+url="https://codeberg.org/FreedomNAS/freedomnas-docs"
+license=('MPL-2.0' 'OFL-1.1')
+depends=()
+makedepends=(git mkdocs mkdocs-material python-pymdown-extensions)
+source=("git+https://codeberg.org/FreedomNAS/freedomnas-docs.git#branch=${_ref}")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "${srcdir}/${pkgname}"
+    if [ "${_ref}" = main ]; then
+        printf '%s' "${_basever}"
+    else
+        printf '%s+%s.%s' "${_basever}" \
+            "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)" \
+            "$(git log -1 --format=%h)"
+    fi
+}
+
+build() {
+    cd "${srcdir}/${pkgname}"
+    FREEDOMNAS_DOCS_VERSION="${pkgver}" mkdocs build --site-dir "${srcdir}/site"
+}
+
+package() {
+    install -d "${pkgdir}/usr/lib/freedomnas/docs"
+    cp -r "${srcdir}/site/." "${pkgdir}/usr/lib/freedomnas/docs/"
+    install -Dm 644 "${srcdir}/${pkgname}/LICENSE" "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm 644 "${srcdir}/${pkgname}/docs/assets/fonts/roboto/OFL.txt" "${pkgdir}/usr/share/licenses/${pkgname}/OFL-Roboto.txt"
+    install -Dm 644 "${srcdir}/${pkgname}/docs/assets/fonts/robotomono/OFL.txt" "${pkgdir}/usr/share/licenses/${pkgname}/OFL-RobotoMono.txt"
+}

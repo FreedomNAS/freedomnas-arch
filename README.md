@@ -83,3 +83,12 @@ after importing the registry's key
 on the self-hosted runner, with the secrets `PACKAGE_REGISTRY_USER` and
 `PACKAGE_REGISTRY_TOKEN` that freedomnas-deb uses. The kernel is rebuilt only
 when its version is not in the registry yet.
+
+## License
+
+GPL-2.0-or-later: the GNU General Public License, version 2 or (at your
+option) any later version. The text of version 2 is in `LICENSE`.
+
+The packages built from here keep the licenses of what they package —
+MPL-2.0 for the FreedomNAS components, the kernel's and OpenZFS's own for
+linux-freedomnas.

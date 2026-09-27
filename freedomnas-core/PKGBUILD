@@ -1,5 +1,7 @@
 # Maintainer: FreedomNAS Team <dev@freedomnas.io>
 pkgname=freedomnas-core
+_basever=1.0
+_ref=${FREEDOMNAS_REF:-dev}
 pkgver=1.0
 pkgrel=1
 pkgdesc="FreedomNAS Core Engine — OS-agnostic storage appliance"
@@ -16,8 +18,20 @@ optdepends=(
     'zfs: ZFS support (highly recommended)'
     'zfs-dkms: ZFS kernel module on non-LTS kernels'
 )
-source=("git+https://codeberg.org/freedomnas/freedomnas-core.git#tag=v${pkgver}")
+makedepends=(git)
+source=("git+https://codeberg.org/FreedomNAS/freedomnas-core.git#branch=${_ref}")
 sha256sums=('SKIP')
+
+pkgver() {
+    cd "${srcdir}/${pkgname}"
+    if [ "${_ref}" = main ]; then
+        printf '%s' "${_basever}"
+    else
+        printf '%s+%s.%s' "${_basever}" \
+            "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)" \
+            "$(git log -1 --format=%h)"
+    fi
+}
 install=freedomnas-core.install
 
 # The core goes where every edition puts it: the package directory under
@@ -42,6 +56,6 @@ package() {
     # The OS profiles are their own package (freedomnas-profiles) and are
     # installed to /usr/lib/freedomnas/profiles by it, not duplicated here.
 
-    [ -f LICENSE ] && install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    if [ -f LICENSE ]; then install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"; fi
     install -Dm 644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
 }

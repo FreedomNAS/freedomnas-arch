@@ -1,5 +1,7 @@
 # Maintainer: FreedomNAS Team <dev@freedomnas.io>
 pkgname=freedomnas-installer
+_basever=1.0
+_ref=${FREEDOMNAS_REF:-dev}
 pkgver=1.0
 pkgrel=1
 pkgdesc="Profile-driven FreedomNAS installer (clean install or in-place)"
@@ -19,8 +21,20 @@ depends=(
     'curl'
 )
 optdepends=('debootstrap: bootstrap a Debian target natively')
-source=("git+https://codeberg.org/freedomnas/freedomnas-installer.git#tag=v${pkgver}")
+makedepends=(git)
+source=("git+https://codeberg.org/FreedomNAS/freedomnas-installer.git#branch=${_ref}")
 sha256sums=('SKIP')
+
+pkgver() {
+    cd "${srcdir}/${pkgname}"
+    if [ "${_ref}" = main ]; then
+        printf '%s' "${_basever}"
+    else
+        printf '%s+%s.%s' "${_basever}" \
+            "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)" \
+            "$(git log -1 --format=%h)"
+    fi
+}
 
 package() {
     cd "${srcdir}/${pkgname}"
@@ -37,6 +51,6 @@ package() {
     ln -sf /usr/lib/freedomnas/installer/setup.py "${pkgdir}/usr/bin/freedomnas-install"
 
     # Install license if present
-    [ -f LICENSE ] && install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
-    [ -f README.md ] && install -Dm 644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+    if [ -f LICENSE ]; then install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"; fi
+    if [ -f README.md ]; then install -Dm 644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"; fi
 }

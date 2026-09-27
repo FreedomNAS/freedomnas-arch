@@ -6,7 +6,7 @@ Codeberg's Arch package registry. `freedomnas-deb` is the Debian counterpart.
 | Package | Source |
 |---------|--------|
 | `freedomnas-core`, `freedomnas-profiles`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch (`dev` by default, `FREEDOMNAS_REF` to change it) |
-| `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | Arch's `linux-lts` and OpenZFS, built together |
+| `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
 
 ## Versions
 
@@ -17,41 +17,22 @@ before `1.1`.
 
 ## linux-freedomnas
 
-Kernel packages with the OpenZFS modules built in, the way Proxmox ships its
-kernels. A NAS whose `zfs.ko` is built by DKMS on the machine stops booting
-the first time that build fails; here the kernel, the ZFS modules and the
-matching userspace are compiled together from pinned sources, so an update
-brings all of them or none.
-
-| Package | Contents |
-|---------|----------|
-| `linux-freedomnas` | kernel and modules, ZFS in `extra/zfs`; conflicts with `zfs-dkms` |
-| `linux-freedomnas-headers` | headers for building out-of-tree modules |
-| `zfs-utils-freedomnas` | OpenZFS userspace and dracut module at the exact version in the kernel; provides `zfs-utils` |
-
-The kernel package depends on `zfs-utils-freedomnas` of its own version and
-release (split packages of one build share them), so pacman never pairs a
-kernel with a different userspace. Init scripts are not in
-`zfs-utils-freedomnas`: they come from each init system's package
-(`zfs-openrc`, `zfs-dinit`, ...).
-
-The kernel parts follow `archlinux/packaging/packages/linux-lts` (taken at
-6.18.54-1, commit b51edfc8); the docs package is dropped. Following an Arch
-update means taking its `pkgver`, patches, `config.x86_64` and checksums.
-OpenZFS tarballs are checked against the release key of Tony Hutter
-(`4F3BA9AB6D1F8D683DC2DFB56AD860EED4598027`).
+The kernel with the OpenZFS modules built in has a repository of its own,
+[linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas); it is
+built and published with the scripts here, from a checkout next to this one.
 
 ## Building
 
 ```sh
 bin/build.sh freedomnas-webui              # one package, in an Arch container
 bin/build.sh freedomnas-core freedomnas-webui
-bin/build.sh linux-freedomnas              # about 45 minutes
-bin/build.sh linux-freedomnas -- -R        # repackage without recompiling
+bin/build.sh ../linux-freedomnas           # about 45 minutes
+bin/build.sh ../linux-freedomnas -- -R     # repackage without recompiling
 FREEDOMNAS_REF=main bin/build.sh freedomnas-core
 ```
 
-`bin/build.sh` needs only docker. Packages land in `out/`; each package's
+`bin/build.sh` takes a package directory here or the path of a checkout
+elsewhere, and needs only docker. Packages land in `out/`; each package's
 sources and build tree stay in `work/<package>/`, which is what makes `-R`
 possible. `bin/build-inside.sh` is the part that runs inside the container,
 and the CI calls it directly.
@@ -81,8 +62,8 @@ after importing the registry's key
 
 `.forgejo/workflows/publish-packages.yml` does the same daily and on demand
 on the self-hosted runner, with the secrets `PACKAGE_REGISTRY_USER` and
-`PACKAGE_REGISTRY_TOKEN` that freedomnas-deb uses. The kernel is rebuilt only
-when its version is not in the registry yet.
+`PACKAGE_REGISTRY_TOKEN` that freedomnas-deb uses. It clones linux-freedomnas
+and rebuilds the kernel only when its version is not in the registry yet.
 
 ## License
 
@@ -90,5 +71,4 @@ GPL-2.0-or-later: the GNU General Public License, version 2 or (at your
 option) any later version. The text of version 2 is in `LICENSE`.
 
 The packages built from here keep the licenses of what they package —
-MPL-2.0 for the FreedomNAS components, the kernel's and OpenZFS's own for
-linux-freedomnas.
+MPL-2.0 for the FreedomNAS components.

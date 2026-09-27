@@ -32,6 +32,12 @@ jobs:
             sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
           done
 
+      - name: Check out linux-freedomnas
+        uses: actions/checkout@v4
+        with:
+          repository: FreedomNAS/linux-freedomnas
+          path: linux-freedomnas
+
       - name: Build the kernel if its version is not published yet
         run: |
           ver=$(bash -c 'source linux-freedomnas/PKGBUILD; echo "$pkgver-$pkgrel"')

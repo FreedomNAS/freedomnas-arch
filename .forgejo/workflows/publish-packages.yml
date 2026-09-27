@@ -1,0 +1,50 @@
+name: publish-packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch of the component repositories to build"
+        type: string
+        default: dev
+  schedule:
+    - cron: "37 4 * * *"
+
+jobs:
+  publish:
+    runs-on: docker
+    container:
+      image: archlinux:base-devel
+    env:
+      FREEDOMNAS_REF: ${{ inputs.ref || 'dev' }}
+      GROUP: ${{ inputs.ref == 'main' && 'main' || 'dev' }}
+      BASE: https://codeberg.org/api/packages/FreedomNAS/arch
+    steps:
+      - name: Install the tooling
+        run: pacman -Syu --noconfirm --needed git nodejs curl
+
+      - name: Check out freedomnas-arch
+        uses: actions/checkout@v4
+
+      - name: Build the components
+        run: |
+          for pkg in freedomnas-profiles freedomnas-core freedomnas-webui freedomnas-installer; do
+            sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
+          done
+
+      - name: Build the kernel if its version is not published yet
+        run: |
+          ver=$(bash -c 'source linux-freedomnas/PKGBUILD; echo "$pkgver-$pkgrel"')
+          file="linux-freedomnas-$ver-x86_64.pkg.tar.zst"
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/$GROUP/x86_64/$file")
+          if [ "$code" = 200 ]; then
+            echo "$file is already published"
+          else
+            MAKEFLAGS="-j$(nproc)" sh bin/build-inside.sh 1000 "$PWD/linux-freedomnas" "$PWD/out" "$PWD/work/linux-freedomnas"
+          fi
+
+      - name: Publish
+        env:
+          CODEBERG_USER: ${{ secrets.PACKAGE_REGISTRY_USER }}
+          CODEBERG_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
+        run: sh bin/publish-codeberg.sh

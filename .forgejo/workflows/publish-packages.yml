@@ -33,10 +33,7 @@ jobs:
           done
 
       - name: Check out linux-freedomnas
-        uses: actions/checkout@v4
-        with:
-          repository: FreedomNAS/linux-freedomnas
-          path: linux-freedomnas
+        run: git clone --depth 1 --branch dev https://codeberg.org/FreedomNAS/linux-freedomnas linux-freedomnas
 
       - name: Build the kernel if its version is not published yet
         run: |

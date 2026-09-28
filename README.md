@@ -66,9 +66,13 @@ after importing the registry's key
 `pacman-key --add` and `pacman-key --lsign-key`.
 
 `.forgejo/workflows/publish-packages.yml` does the same daily and on demand
-on the self-hosted runner, with the secrets `PACKAGE_REGISTRY_USER` and
-`PACKAGE_REGISTRY_TOKEN` that freedomnas-deb uses. It clones linux-freedomnas
-and rebuilds the kernel only when its version is not in the registry yet.
+on the self-hosted runner, with the organization secrets
+`PACKAGE_REGISTRY_USER` and `PACKAGE_REGISTRY_TOKEN`. It clones
+linux-freedomnas and rebuilds the kernel only when its version is not in the
+registry yet. After publishing, `bin/prune-registry.py` deletes every
+version but the newest of each package (snapshots and releases counted
+apart), because Arch is rolling and pacman only ever installs the newest;
+`DRY_RUN=1` shows what it would delete.
 
 ## License
 

@@ -21,7 +21,7 @@ jobs:
       BASE: https://codeberg.org/api/packages/FreedomNAS/arch
     steps:
       - name: Install the tooling
-        run: pacman -Syu --noconfirm --needed git nodejs curl
+        run: pacman -Syu --noconfirm --needed git nodejs curl python
 
       - name: Check out freedomnas-arch
         uses: actions/checkout@v4
@@ -51,3 +51,9 @@ jobs:
           CODEBERG_USER: ${{ secrets.PACKAGE_REGISTRY_USER }}
           CODEBERG_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
         run: sh bin/publish-codeberg.sh
+
+      - name: Delete superseded versions
+        env:
+          CODEBERG_USER: ${{ secrets.PACKAGE_REGISTRY_USER }}
+          CODEBERG_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
+        run: python3 bin/prune-registry.py

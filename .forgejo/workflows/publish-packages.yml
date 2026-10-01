@@ -22,13 +22,17 @@ jobs:
     env:
       FREEDOMNAS_REF: ${{ inputs.ref || 'dev' }}
       GROUP: ${{ inputs.ref == 'main' && 'main' || 'dev' }}
-      BASE: https://codeberg.org/api/packages/FreedomNAS/arch
     steps:
       - name: Install the tooling
-        run: pacman -Syu --noconfirm --needed git nodejs curl python
+        run: pacman -Syu --noconfirm --needed git nodejs curl python gnupg
 
       - name: Check out freedomnas-arch
         uses: actions/checkout@v4
+
+      - name: Import the signing key
+        env:
+          ARCH_SIGNING_KEY: ${{ secrets.ARCH_SIGNING_KEY }}
+        run: printf '%s\n' "$ARCH_SIGNING_KEY" | gpg --batch --quiet --import
 
       - name: Build the components
         run: |
@@ -36,28 +40,26 @@ jobs:
             sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
           done
 
-      - name: Check out linux-freedomnas
-        run: git clone --depth 1 --branch dev https://codeberg.org/FreedomNAS/linux-freedomnas linux-freedomnas
+      - name: Check out the kernel and the ZFS service scripts
+        run: |
+          git clone --depth 1 --branch dev https://codeberg.org/FreedomNAS/linux-freedomnas linux-freedomnas
+          git clone --depth 1 https://codeberg.org/sarahmeow86/zfs-openrc zfs-openrc
+          git clone --depth 1 https://codeberg.org/sarahmeow86/zfs-dinit zfs-dinit
 
       - name: Build the kernel if its version is not published yet
         run: |
-          ver=$(bash -c 'source linux-freedomnas/PKGBUILD; echo "$pkgver-$pkgrel"')
-          file="linux-freedomnas-$ver-x86_64.pkg.tar.zst"
-          code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/$GROUP/x86_64/$file")
-          if [ "$code" = 200 ]; then
-            echo "$file is already published"
-          else
+          if ! sh bin/is-published.sh linux-freedomnas; then
             CCACHE_DIR=/ccache MAKEFLAGS="-j$(nproc)" sh bin/build-inside.sh 1000 "$PWD/linux-freedomnas" "$PWD/out" "$PWD/work/linux-freedomnas"
           fi
+
+      - name: Build topgrade and the ZFS service scripts if not published yet
+        run: |
+          for pkg in topgrade-bin zfs-openrc zfs-dinit; do
+            sh bin/is-published.sh "$pkg" || sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
+          done
 
       - name: Publish
         env:
           CODEBERG_USER: ${{ secrets.PACKAGE_REGISTRY_USER }}
           CODEBERG_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
         run: sh bin/publish-codeberg.sh
-
-      - name: Delete superseded versions
-        env:
-          CODEBERG_USER: ${{ secrets.PACKAGE_REGISTRY_USER }}
-          CODEBERG_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
-        run: python3 bin/prune-registry.py

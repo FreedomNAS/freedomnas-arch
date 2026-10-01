@@ -1,12 +1,16 @@
 # freedomnas-arch
 
-The Arch packages of FreedomNAS, for the Arch and Artix editions, published to
-Codeberg's Arch package registry. `freedomnas-deb` is the Debian counterpart.
+The Arch packages of FreedomNAS, for the Arch and Artix editions: a signed
+pacman repository built here with `repo-add` and published to Codeberg's
+generic package registry. `freedomnas-deb` is the Debian counterpart.
 
 | Package | Source |
 |---------|--------|
 | `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch (`dev` by default, `FREEDOMNAS_REF` to change it) |
 | `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
+| `topgrade-bin` | `topgrade-bin/` here: upstream's statically linked musl release binary, as freedomnas-deb ships it; topgrade is in neither Arch's nor Artix's repositories, and building it pulls the Rust toolchain |
+| `zfs-openrc` | [sarahmeow86/zfs-openrc](https://codeberg.org/sarahmeow86/zfs-openrc), the OpenRC service scripts for ZFS (Artix) |
+| `zfs-dinit`, `zfs-runit`, `zfs-s6` | [sarahmeow86/zfs-dinit](https://codeberg.org/sarahmeow86/zfs-dinit), the dinit, runit and s6 service scripts for ZFS (Artix) |
 
 ## Versions
 
@@ -49,30 +53,41 @@ CODEBERG_USER=<user> CODEBERG_TOKEN=<token> bin/publish-codeberg.sh
 GROUP=main ... bin/publish-codeberg.sh out/freedomnas-core-1.0-1-any.pkg.tar.zst
 ```
 
-The token needs the `package` scope (write). `GROUP` is the registry's
-repository: `dev` for snapshots, `main` for releases. The registry refuses a
-version it already holds.
+The token needs the `package` scope (write), and gpg must hold the signing
+key (its public half is `keys/freedomnas-arch.asc`, fingerprint
+`015549123DF4D6D5ADBE4179522C9783DC389A3B`). `GROUP` is the channel: `dev`
+for snapshots, `main` for releases. A package already in the channel at the
+same file name is skipped.
+
+The script signs each new package, adds it to the channel's `freedomnas.db`
+with `repo-add --sign` (which also replaces the entry of the version it
+supersedes), uploads the packages and their signatures, then replaces the
+database and the files list, and finally deletes the files of the superseded
+versions. Codeberg's generic registry does not overwrite a file, so the
+database is deleted and uploaded again; a `pacman -Sy` in that instant gets a
+404 and only needs repeating. The registry's own Arch type is not used: it
+writes every package's file list into the `.db` and cuts it at 65535 bytes,
+so the kernel's entry ends mid-path and pacman discards the whole repository.
+`repo-add` keeps file lists in `freedomnas.files`, as Arch's repositories do.
 
 On a FreedomNAS machine:
 
 ```
 [freedomnas]
 SigLevel = Required
-Server = https://codeberg.org/api/packages/FreedomNAS/arch/dev/$arch
+Server = https://codeberg.org/api/packages/FreedomNAS/generic/freedomnas-arch/dev
 ```
 
-after importing the registry's key
-(`https://codeberg.org/api/packages/FreedomNAS/arch/repository.key`) with
-`pacman-key --add` and `pacman-key --lsign-key`.
+after importing the key
+(`https://codeberg.org/api/packages/FreedomNAS/generic/freedomnas-arch/dev/repository.key`)
+with `pacman-key --add` and `pacman-key --lsign-key`.
 
 `.forgejo/workflows/publish-packages.yml` does the same daily and on demand
 on the self-hosted runner, with the organization secrets
-`PACKAGE_REGISTRY_USER` and `PACKAGE_REGISTRY_TOKEN`. It clones
-linux-freedomnas and rebuilds the kernel only when its version is not in the
-registry yet. After publishing, `bin/prune-registry.py` deletes every
-version but the newest of each package (snapshots and releases counted
-apart), because Arch is rolling and pacman only ever installs the newest;
-`DRY_RUN=1` shows what it would delete.
+`PACKAGE_REGISTRY_USER`, `PACKAGE_REGISTRY_TOKEN` and `ARCH_SIGNING_KEY`
+(the armored private key). It clones linux-freedomnas, zfs-openrc and
+zfs-dinit, and builds the kernel, `topgrade-bin` and the service scripts only
+when `bin/is-published.sh` does not find their version in the channel.
 
 ## License
 

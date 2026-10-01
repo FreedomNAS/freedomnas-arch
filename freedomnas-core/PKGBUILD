@@ -15,8 +15,8 @@ depends=(
     'python-cryptography'
 )
 optdepends=(
-    'zfs: ZFS support (highly recommended)'
-    'zfs-dkms: ZFS kernel module on non-LTS kernels'
+    'linux-freedomnas: kernel with OpenZFS built in (FreedomNAS repository)'
+    'zfs-utils: ZFS userland (zfs-utils-freedomnas in the FreedomNAS repository)'
 )
 makedepends=(git)
 source=("git+https://codeberg.org/FreedomNAS/freedomnas-core.git#branch=${_ref}")

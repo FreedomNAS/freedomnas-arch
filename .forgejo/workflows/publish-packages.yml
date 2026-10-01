@@ -15,6 +15,10 @@ jobs:
     runs-on: docker
     container:
       image: archlinux:base-devel
+      # The kernel's ccache, kept on the runner host between runs; the
+      # runner's config.yaml must list it in valid_volumes.
+      volumes:
+        - /var/cache/freedomnas-ccache/arch:/ccache
     env:
       FREEDOMNAS_REF: ${{ inputs.ref || 'dev' }}
       GROUP: ${{ inputs.ref == 'main' && 'main' || 'dev' }}
@@ -43,7 +47,7 @@ jobs:
           if [ "$code" = 200 ]; then
             echo "$file is already published"
           else
-            MAKEFLAGS="-j$(nproc)" sh bin/build-inside.sh 1000 "$PWD/linux-freedomnas" "$PWD/out" "$PWD/work/linux-freedomnas"
+            CCACHE_DIR=/ccache MAKEFLAGS="-j$(nproc)" sh bin/build-inside.sh 1000 "$PWD/linux-freedomnas" "$PWD/out" "$PWD/work/linux-freedomnas"
           fi
 
       - name: Publish

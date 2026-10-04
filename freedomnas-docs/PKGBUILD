@@ -1,8 +1,8 @@
 # Maintainer: FreedomNAS Team <dev@freedomnas.io>
 pkgname=freedomnas-docs
-_basever=0.9.9
+_basever=0.9.10
 _ref=${FREEDOMNAS_REF:-dev}
-pkgver=0.9.9
+pkgver=0.9.10
 pkgrel=1
 pkgdesc="FreedomNAS documentation, for reading offline in the WebUI"
 arch=('any')

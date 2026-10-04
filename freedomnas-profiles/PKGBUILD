@@ -10,18 +10,21 @@ url="https://codeberg.org/FreedomNAS/freedomnas-profiles"
 license=('MPL-2.0')
 depends=()
 makedepends=(git)
-source=("git+https://codeberg.org/FreedomNAS/freedomnas-profiles.git#branch=${_ref}")
+case "${_ref}" in
+    v[0-9]*) _fragment="tag=${_ref}" ;;
+    *) _fragment="branch=${_ref}" ;;
+esac
+source=("git+https://codeberg.org/FreedomNAS/freedomnas-profiles.git#${_fragment}")
 sha256sums=('SKIP')
 
 pkgver() {
     cd "${srcdir}/${pkgname}"
-    if [ "${_ref}" = main ]; then
-        printf '%s' "${_basever}"
-    else
-        printf '%s+%s.%s' "${_basever}" \
-            "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)" \
-            "$(git log -1 --format=%h)"
-    fi
+    case "${_ref}" in
+        main|v[0-9]*) printf '%s' "${_basever}" ;;
+        *) printf '%s+%s.%s' "${_basever}" \
+               "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)" \
+               "$(git log -1 --format=%h)" ;;
+    esac
 }
 
 package() {

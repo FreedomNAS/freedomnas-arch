@@ -20,7 +20,7 @@ jobs:
       volumes:
         - /var/cache/freedomnas-ccache/arch:/ccache
     env:
-      FREEDOMNAS_REF: ${{ inputs.ref || 'dev' }}
+      REF: ${{ inputs.ref || 'dev' }}
       GROUP: ${{ inputs.ref == 'main' && 'main' || 'dev' }}
     steps:
       - name: Install the tooling
@@ -28,6 +28,19 @@ jobs:
 
       - name: Check out freedomnas-arch
         uses: actions/checkout@v4
+
+      # A release is built from the newest release tag (vX.Y.Z, the same
+      # name in every FreedomNAS repository), not from the tip of main.
+      - name: Pick the ref to build
+        run: |
+          ref="$REF"
+          if [ "$ref" = main ]; then
+            ref="$(git ls-remote --tags --refs https://codeberg.org/FreedomNAS/freedomnas-core.git 'v*' \
+              | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+(\.[0-9]+)*$' | sort -V | tail -n 1)"
+            [ -n "$ref" ] || { echo "no release tag on freedomnas-core" >&2; exit 1; }
+          fi
+          echo "Building $ref"
+          echo "FREEDOMNAS_REF=$ref" >> "$GITHUB_ENV"
 
       - name: Import the signing key
         env:

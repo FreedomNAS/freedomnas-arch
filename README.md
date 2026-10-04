@@ -6,7 +6,7 @@ generic package registry. `freedomnas-deb` is the Debian counterpart.
 
 | Package | Source |
 |---------|--------|
-| `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch (`dev` by default, `FREEDOMNAS_REF` to change it) |
+| `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch or a release tag (`dev` by default, `FREEDOMNAS_REF` to change it: `main`, or a tag such as `v0.9.10`) |
 | `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
 | `topgrade-bin` | `topgrade-bin/` here: upstream's statically linked musl release binary, as freedomnas-deb ships it; topgrade is in neither Arch's nor Artix's repositories, and building it pulls the Rust toolchain |
 | `zfs-openrc` | [sarahmeow86/zfs-openrc](https://codeberg.org/sarahmeow86/zfs-openrc), the OpenRC service scripts for ZFS (Artix) |

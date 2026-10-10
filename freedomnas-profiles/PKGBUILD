@@ -8,7 +8,7 @@ pkgdesc="FreedomNAS OS Profiles — JSON Translator Layer for universal applianc
 arch=('any')
 url="https://codeberg.org/FreedomNAS/freedomnas-profiles"
 license=('MPL-2.0')
-depends=()
+depends=(binutils diffutils)
 makedepends=(git)
 case "${_ref}" in
     v[0-9]*) _fragment="tag=${_ref}" ;;

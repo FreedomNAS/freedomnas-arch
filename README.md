@@ -82,12 +82,18 @@ after importing the key
 (`https://codeberg.org/api/packages/FreedomNAS/generic/freedomnas-arch/dev/repository.key`)
 with `pacman-key --add` and `pacman-key --lsign-key`.
 
-`.forgejo/workflows/publish-packages.yml` does the same daily and on demand
-on the self-hosted runner, with the organization secrets
-`PACKAGE_REGISTRY_USER`, `PACKAGE_REGISTRY_TOKEN` and `ARCH_SIGNING_KEY`
-(the armored private key). It clones linux-freedomnas, zfs-openrc and
-zfs-dinit, and builds the kernel, `topgrade-bin` and the service scripts only
-when `bin/is-published.sh` does not find their version in the channel.
+`.forgejo/workflows/publish-packages.yml` does the same daily and on demand,
+with the organization secrets `PACKAGE_REGISTRY_USER`,
+`PACKAGE_REGISTRY_TOKEN` and `ARCH_SIGNING_KEY` (the armored private key), in
+three jobs. `packages` runs on Codeberg's own runners: the five FreedomNAS
+packages, the community modules (`freedomnas-module-containers`, from its own
+`dev` branch, or its newest tag on `main`), and `topgrade-bin`, `zfs-openrc`
+and `zfs-dinit` when `bin/is-published.sh` does not find their version in the
+channel. `kernel-check` asks the same of linux-freedomnas on Codeberg's
+smallest runner, and `kernel` builds it on the self-hosted runner, where its
+ccache lives, only when it is missing, and only after `packages`: both
+rewrite the same repository database. With the self-hosted runner off, the
+packages are still published and only a new kernel waits.
 
 ## License
 

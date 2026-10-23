@@ -1,0 +1,9 @@
+post_install() {
+    getent group caddy >/dev/null || groupadd -r caddy
+    getent passwd caddy >/dev/null || useradd -r -g caddy -d /var/lib/caddy -s /usr/bin/nologin -c "Caddy web server" caddy
+    install -d -m 750 -o caddy -g caddy /var/lib/caddy
+}
+
+post_upgrade() {
+    post_install
+}

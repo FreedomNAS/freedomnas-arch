@@ -1,0 +1,41 @@
+# Maintainer: FreedomNAS Team <dev@freedomnas.io>
+pkgname=freedomnas-module-proxy
+_repo=freedomnas-proxy
+_basever=0.1.0
+_ref=${FREEDOMNAS_REF:-dev}
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Reverse proxy for FreedomNAS: Caddy with HTTPS for every web app"
+arch=('any')
+url="https://codeberg.org/FreedomNAS/freedomnas-proxy"
+license=('MPL-2.0')
+depends=('freedomnas-core>0.9.12' 'freedomnas-webui>0.9.12')
+optdepends=("caddy: the reverse proxy itself (Arch; caddy-bin on Artix), installed from the WebUI otherwise")
+makedepends=(git)
+case "${_ref}" in
+    v[0-9]*) _fragment="tag=${_ref}" ;;
+    *) _fragment="branch=${_ref}" ;;
+esac
+source=("git+https://codeberg.org/FreedomNAS/${_repo}.git#${_fragment}")
+sha256sums=('SKIP')
+
+pkgver() {
+    cd "${srcdir}/${_repo}"
+    case "${_ref}" in
+        main|v[0-9]*) printf '%s' "${_basever}" ;;
+        *) printf '%s+%s.%s' "${_basever}" \
+               "$(git log -1 --format=%cd --date=format:%Y%m%d%H%M%S)" \
+               "$(git log -1 --format=%h)" ;;
+    esac
+}
+
+package() {
+    cd "${srcdir}/${_repo}"
+
+    install -d "${pkgdir}/usr/lib/freedomnas/modules" "${pkgdir}/usr/lib/freedomnas/profiles"
+    cp -r modules/proxy "${pkgdir}/usr/lib/freedomnas/modules/proxy"
+    cp -r profiles/proxy "${pkgdir}/usr/lib/freedomnas/profiles/proxy"
+
+    install -Dm 644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+    install -Dm 644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+}

@@ -1,0 +1,7 @@
+type            = process
+command         = /usr/bin/caddy run --environ --config /etc/caddy/Caddyfile --adapter caddyfile
+run-as          = caddy
+env-file        = /etc/dinit.d/config/caddy.conf
+smooth-recovery = true
+logfile         = /var/log/dinit/caddy.log
+depends-on      = network.target

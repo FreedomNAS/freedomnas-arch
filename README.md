@@ -86,9 +86,11 @@ with `pacman-key --add` and `pacman-key --lsign-key`.
 with the organization secrets `PACKAGE_REGISTRY_USER`,
 `PACKAGE_REGISTRY_TOKEN` and `ARCH_SIGNING_KEY` (the armored private key), in
 three jobs. `packages` runs on Codeberg's own runners: the five FreedomNAS
-packages, the community modules (`freedomnas-module-containers`, from its own
+packages, the community modules (`freedomnas-module-containers`, `freedomnas-module-proxy`, each from its own
 `dev` branch, or its newest tag on `main`), and `topgrade-bin`, `zfs-openrc`
-and `zfs-dinit` when `bin/is-published.sh` does not find their version in the
+and `zfs-dinit`, and `caddy-bin` with `caddy-openrc`, `caddy-dinit`, `caddy-runit`
+(Caddy for Artix, which packages none: upstream's static build and a service
+per init, for the reverse proxy module) when `bin/is-published.sh` does not find their version in the
 channel. `kernel-check` asks the same of linux-freedomnas on Codeberg's
 smallest runner, and `kernel` builds it on the self-hosted runner, where its
 ccache lives, only when it is missing, and only after `packages`: both

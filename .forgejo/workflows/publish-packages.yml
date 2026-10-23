@@ -70,7 +70,7 @@ jobs:
       # yet is left out of main. FREEDOMNAS_REF is the module's ref here.
       - name: Build the community modules
         run: |
-          for repo in freedomnas-containers; do
+          for repo in freedomnas-containers freedomnas-proxy; do
             pkg="freedomnas-module-${repo#freedomnas-}"
             ref=dev
             if [ "$REF" = main ]; then
@@ -87,9 +87,9 @@ jobs:
           git clone --depth 1 https://codeberg.org/sarahmeow86/zfs-openrc zfs-openrc
           git clone --depth 1 https://codeberg.org/sarahmeow86/zfs-dinit zfs-dinit
 
-      - name: Build topgrade and the ZFS service scripts if not published yet
+      - name: Build topgrade, Caddy for Artix and the ZFS service scripts if not published yet
         run: |
-          for pkg in topgrade-bin zfs-openrc zfs-dinit; do
+          for pkg in topgrade-bin caddy-bin zfs-openrc zfs-dinit; do
             sh bin/is-published.sh "$pkg" || sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
           done
 

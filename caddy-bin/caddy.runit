@@ -1,0 +1,4 @@
+#!/bin/sh
+exec 2>&1
+export HOME=/var/lib/caddy XDG_DATA_HOME=/var/lib/caddy XDG_CONFIG_HOME=/var/lib/caddy
+exec chpst -u caddy:caddy caddy run --environ --config /etc/caddy/Caddyfile --adapter caddyfile

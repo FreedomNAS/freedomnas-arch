@@ -1,0 +1,41 @@
+#!/usr/bin/openrc-run
+
+extra_commands="checkconfig"
+extra_started_commands="reload"
+
+description="Caddy web server"
+caddy_config="${caddy_config:-/etc/caddy/Caddyfile}"
+command="/usr/bin/caddy"
+command_args="run --environ --config ${caddy_config} --adapter caddyfile"
+command_user="${command_user:-caddy:caddy}"
+pidfile="/run/${RC_SVCNAME}.pid"
+logfile="${logfile:-/var/log/${RC_SVCNAME}.log}"
+output_log="${logfile}"
+error_log="${logfile}"
+supervisor="supervise-daemon"
+respawn_delay=5
+respawn_max=10
+respawn_period=60
+supervise_daemon_args="--env HOME=/var/lib/caddy --env XDG_DATA_HOME=/var/lib/caddy --env XDG_CONFIG_HOME=/var/lib/caddy"
+
+depend() {
+	need net
+	use dns logger
+}
+
+checkconfig() {
+	"${command}" validate --config "${caddy_config}" --adapter caddyfile >/dev/null
+}
+
+start_pre() {
+	checkpath --directory --mode 750 --owner "${command_user}" /var/lib/caddy
+	checkpath --file --mode 640 --owner "${command_user}" "${logfile}"
+	checkconfig || { eerror "${caddy_config} is not valid"; return 1; }
+}
+
+reload() {
+	checkconfig || { eerror "${caddy_config} is not valid"; return 1; }
+	ebegin "Reloading ${RC_SVCNAME}"
+	"${command}" reload --config "${caddy_config}" --adapter caddyfile --force >/dev/null 2>&1
+	eend $?
+}

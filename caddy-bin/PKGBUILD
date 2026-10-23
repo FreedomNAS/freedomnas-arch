@@ -1,0 +1,48 @@
+# Maintainer: FreedomNAS Team <dev@freedomnas.io>
+# Caddy for Artix, which packages none: upstream's own static build, plus the
+# service scripts of each init (Arch has caddy in extra, with a systemd unit).
+pkgbase=caddy-bin
+pkgname=(caddy-bin caddy-openrc caddy-dinit caddy-runit)
+pkgver=2.11.7
+pkgrel=1
+pkgdesc="Fast, multi-platform web server with automatic HTTPS"
+arch=('x86_64')
+url="https://caddyserver.com"
+license=('Apache-2.0')
+options=('!debug' '!strip')
+source=("https://github.com/caddyserver/caddy/releases/download/v$pkgver/caddy_${pkgver}_linux_amd64.tar.gz"
+        Caddyfile caddy.openrc caddy.confd caddy.dinit caddy.dinit.conf caddy.runit)
+sha512sums=('a7a433a1b133efc3c8d10eb0b99d52a24b5ef5c322dc77f5282182b1c0402139ab83f3a99f0c52409df77d20123fb0b523edad8a66d8f5e49136197bf61ef0e7'
+            SKIP SKIP SKIP SKIP SKIP SKIP)
+
+package_caddy-bin() {
+    provides=("caddy=$pkgver")
+    conflicts=('caddy')
+    backup=('etc/caddy/Caddyfile')
+    install=caddy-bin.install
+    install -Dm755 "$srcdir/caddy" "$pkgdir/usr/bin/caddy"
+    install -Dm644 "$srcdir/Caddyfile" "$pkgdir/etc/caddy/Caddyfile"
+    install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
+
+package_caddy-openrc() {
+    pkgdesc="OpenRC service script for Caddy"
+    depends=('openrc' 'caddy')
+    backup=('etc/conf.d/caddy')
+    install -Dm755 "$srcdir/caddy.openrc" "$pkgdir/etc/init.d/caddy"
+    install -Dm644 "$srcdir/caddy.confd" "$pkgdir/etc/conf.d/caddy"
+}
+
+package_caddy-dinit() {
+    pkgdesc="dinit service for Caddy"
+    depends=('dinit' 'caddy')
+    backup=('etc/dinit.d/config/caddy.conf')
+    install -Dm644 "$srcdir/caddy.dinit" "$pkgdir/etc/dinit.d/caddy"
+    install -Dm644 "$srcdir/caddy.dinit.conf" "$pkgdir/etc/dinit.d/config/caddy.conf"
+}
+
+package_caddy-runit() {
+    pkgdesc="runit service for Caddy"
+    depends=('runit' 'caddy')
+    install -Dm755 "$srcdir/caddy.runit" "$pkgdir/etc/runit/sv/caddy/run"
+}

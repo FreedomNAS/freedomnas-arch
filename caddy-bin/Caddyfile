@@ -1,0 +1,9 @@
+# The Caddyfile is an easy way to configure your Caddy web server.
+# https://caddyserver.com/docs/caddyfile
+#
+# No sites yet: Caddy runs as the caddy user, which cannot listen on ports
+# below 1024. FreedomNAS's reverse proxy module replaces this file with its
+# own, keeping this one as Caddyfile.pre-freedomnas.
+{
+	admin localhost:2019
+}

@@ -1,0 +1,3 @@
+# caddy_config="/etc/caddy/Caddyfile"
+# command_user="caddy:caddy"
+# logfile="/var/log/caddy.log"

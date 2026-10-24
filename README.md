@@ -90,7 +90,8 @@ packages, the community modules (`freedomnas-module-containers`, `freedomnas-mod
 `dev` branch, or its newest tag on `main`), and `topgrade-bin`, `zfs-openrc`
 and `zfs-dinit`, and `caddy-bin` with `caddy-openrc`, `caddy-dinit`, `caddy-runit`
 (Caddy for Artix, which packages none: upstream's static build and a service
-per init, for the reverse proxy module) when `bin/is-published.sh` does not find their version in the
+per init, for the reverse proxy module), and `lego-bin` (lego for Artix, upstream's static build, for
+the proxy's Let's Encrypt certificates) when `bin/is-published.sh` does not find their version in the
 channel. `kernel-check` asks the same of linux-freedomnas on Codeberg's
 smallest runner, and `kernel` builds it on the self-hosted runner, where its
 ccache lives, only when it is missing, and only after `packages`: both

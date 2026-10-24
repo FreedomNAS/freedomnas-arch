@@ -10,7 +10,8 @@ arch=('any')
 url="https://codeberg.org/FreedomNAS/freedomnas-proxy"
 license=('MPL-2.0')
 depends=('freedomnas-core>0.9.12' 'freedomnas-webui>0.9.12')
-optdepends=("caddy: the reverse proxy itself (Arch; caddy-bin on Artix), installed from the WebUI otherwise")
+optdepends=("caddy: the reverse proxy itself (Arch; caddy-bin on Artix), installed from the WebUI otherwise"
+            "lego: Let's Encrypt certificates for your own domain (Arch; lego-bin on Artix), installed from the WebUI otherwise")
 makedepends=(git)
 case "${_ref}" in
     v[0-9]*) _fragment="tag=${_ref}" ;;

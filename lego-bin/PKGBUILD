@@ -1,0 +1,20 @@
+# Maintainer: FreedomNAS Team <dev@freedomnas.io>
+# lego for Artix, which packages none: upstream's own static build. The reverse
+# proxy module gets Let's Encrypt certificates with it (DNS-01); Arch has lego in extra.
+pkgname=lego-bin
+pkgver=5.5.2
+pkgrel=1
+pkgdesc="Let's Encrypt client and ACME library written in Go"
+arch=('x86_64')
+url="https://go-acme.github.io/lego/"
+license=('MIT')
+provides=("lego=$pkgver")
+conflicts=('lego')
+options=('!debug' '!strip')
+source=("https://github.com/go-acme/lego/releases/download/v$pkgver/lego_v${pkgver}_linux_amd64.tar.gz")
+sha512sums=('79bbe012448bf0e5a85e6d1d3d11e192d546f5cb18d785e9cb1b7276eb7f8e6e70e208fe0fe54e8c6a0a7cf13293299f780c3c1383184c660cadf70bc1187293')
+
+package() {
+    install -Dm755 "$srcdir/lego" "$pkgdir/usr/bin/lego"
+    install -Dm644 "$srcdir/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

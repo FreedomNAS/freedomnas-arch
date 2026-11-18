@@ -99,6 +99,12 @@ for pkg in $new; do
     put "$pkg.sig" "$(basename "$pkg").sig"
 done
 
+for pkg in $new; do
+    case "$(basename "$pkg")" in
+        freedomnas-keyring-*.pkg.tar.zst) put "$pkg" freedomnas-keyring.pkg.tar.zst ;;
+    esac
+done
+
 echo "==> database"
 for f in db db.sig files files.sig; do
     src="$work/$REPO.${f%.sig}.tar.gz"
@@ -118,9 +124,7 @@ Published to $BASE.
 
 On the FreedomNAS machine:
 
-  curl -L -o /tmp/freedomnas.key $BASE/repository.key
-  pacman-key --add /tmp/freedomnas.key
-  pacman-key --lsign-key $key
-  printf '\n[freedomnas]\nSigLevel = Required\nServer = $BASE\n' >> /etc/pacman.conf
+  curl -fLo /tmp/freedomnas-keyring.pkg.tar.zst $BASE/freedomnas-keyring.pkg.tar.zst
+  pacman -U /tmp/freedomnas-keyring.pkg.tar.zst
   pacman -Sy freedomnas-webui
 EOF

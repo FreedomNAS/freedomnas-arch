@@ -95,9 +95,9 @@ jobs:
             sed -i "s|https://codeberg.org/sarahmeow86/|https://github.com/sarahmeow86/|" "$repo/PKGBUILD"
           done
 
-      - name: Build topgrade, Caddy and lego for Artix and the ZFS service scripts if not published yet
+      - name: Build the keyring, topgrade, Caddy and lego for Artix and the ZFS service scripts if not published yet
         run: |
-          for pkg in topgrade-bin caddy-bin lego-bin zfs-openrc zfs-dinit; do
+          for pkg in freedomnas-keyring topgrade-bin caddy-bin lego-bin zfs-openrc zfs-dinit; do
             sh bin/is-published.sh "$pkg" || sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
           done
 

@@ -70,17 +70,22 @@ versions. `repo-add` keeps file lists in `freedomnas.files`, as Arch's
 repositories do. GitHub renames assets whose name holds characters other
 than letters, digits and `._+-`, so the script refuses such a package.
 
-On a FreedomNAS machine:
+On a FreedomNAS machine, `freedomnas-keyring` sets everything up: the key,
+`/etc/pacman.d/freedomnas-mirrorlist` for the channel in use and the
+`[freedomnas]` section of `/etc/pacman.conf`. It also moves a machine still
+pointing at Codeberg:
 
 ```
-[freedomnas]
-SigLevel = Required
-Server = https://github.com/FreedomNAS/freedomnas-arch/releases/download/pacman-dev
+curl -fLo /tmp/freedomnas-keyring.pkg.tar.zst https://github.com/FreedomNAS/freedomnas-arch/releases/download/pacman-main/freedomnas-keyring.pkg.tar.zst
+pacman -U /tmp/freedomnas-keyring.pkg.tar.zst
 ```
 
-after importing the key
-(`https://github.com/FreedomNAS/freedomnas-arch/releases/download/pacman-dev/repository.key`)
-with `pacman-key --add` and `pacman-key --lsign-key`.
+pacman installs a local file whose key it does not trust yet
+(`LocalFileSigLevel = Optional`), not one given by URL. A new key or address
+is a new `pkgver` of `freedomnas-keyring` (its files are made with
+`gpg --dearmor < keys/freedomnas-arch.asc` and the fingerprint followed by
+`:4:`); `publish-github.sh` also uploads it as
+`freedomnas-keyring.pkg.tar.zst`.
 
 `.github/workflows/publish-packages.yml` does the same, with the
 organization secret `ARCH_SIGNING_KEY` (the armored private key), in four

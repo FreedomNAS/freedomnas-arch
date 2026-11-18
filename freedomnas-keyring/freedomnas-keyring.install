@@ -1,0 +1,47 @@
+_base=https://github.com/FreedomNAS/freedomnas-arch/releases/download
+_list=etc/pacman.d/freedomnas-mirrorlist
+
+_channel() {
+    for f in "$_list" etc/pacman.conf; do
+        [ -f "$f" ] || continue
+        ch="$(awk '
+            /^\[/ { inside = ($0 == "[freedomnas]") }
+            (inside || FILENAME ~ /mirrorlist$/) && /^[[:space:]]*Server[[:space:]]*=/ {
+                if (match($0, /pacman-(dev|main)/)) { print substr($0, RSTART + 7, RLENGTH - 7); exit }
+                if (match($0, /freedomnas-arch\/(dev|main)/)) { print substr($0, RSTART + 16, RLENGTH - 16); exit }
+            }' "$f")"
+        [ -n "$ch" ] && { echo "$ch"; return; }
+    done
+    echo main
+}
+
+_configure() {
+    if usr/bin/pacman-key -l >/dev/null 2>&1; then
+        usr/bin/pacman-key --populate freedomnas
+    fi
+
+    ch="$(_channel)"
+    printf '# Written by freedomnas-keyring: an update of the package may rewrite it.\nServer = %s/pacman-%s\n' \
+        "$_base" "$ch" > "$_list"
+
+    awk -v list="/$_list" '
+        /^\[/ {
+            inside = ($0 == "[freedomnas]")
+            print
+            if (inside) { print "SigLevel = Required"; print "Include = " list; seen = 1 }
+            next
+        }
+        inside && /^[[:space:]]*(Server|Include|SigLevel)[[:space:]]*=/ { next }
+        { print }
+        END { if (!seen) { print ""; print "[freedomnas]"; print "SigLevel = Required"; print "Include = " list } }' etc/pacman.conf > etc/pacman.conf.freedomnas-keyring
+    if cmp -s etc/pacman.conf etc/pacman.conf.freedomnas-keyring; then
+        rm -f etc/pacman.conf.freedomnas-keyring
+    else
+        cat etc/pacman.conf.freedomnas-keyring > etc/pacman.conf
+        rm -f etc/pacman.conf.freedomnas-keyring
+        echo ":: [freedomnas] in /etc/pacman.conf now reads /$_list (channel $ch)"
+    fi
+}
+
+post_install() { _configure; }
+post_upgrade() { _configure; }

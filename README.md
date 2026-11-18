@@ -1,16 +1,16 @@
 # freedomnas-arch
 
 The Arch packages of FreedomNAS, for the Arch and Artix editions: a signed
-pacman repository built here with `repo-add` and published to Codeberg's
-generic package registry. `freedomnas-deb` is the Debian counterpart.
+pacman repository built here with `repo-add` and published in this GitHub
+repository's releases. `freedomnas-deb` is the Debian counterpart.
 
 | Package | Source |
 |---------|--------|
-| `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on Codeberg, at a branch or a release tag (`dev` by default, `FREEDOMNAS_REF` to change it: `main`, or a tag such as `v0.9.10`) |
-| `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
+| `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on GitHub, at a branch or a release tag (`dev` by default, `FREEDOMNAS_REF` to change it: `main`, or a tag such as `v0.9.10`) |
+| `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://github.com/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
 | `topgrade-bin` | `topgrade-bin/` here: upstream's statically linked musl release binary, as freedomnas-deb ships it; topgrade is in neither Arch's nor Artix's repositories, and building it pulls the Rust toolchain |
-| `zfs-openrc` | [sarahmeow86/zfs-openrc](https://codeberg.org/sarahmeow86/zfs-openrc), the OpenRC service scripts for ZFS (Artix) |
-| `zfs-dinit`, `zfs-runit`, `zfs-s6` | [sarahmeow86/zfs-dinit](https://codeberg.org/sarahmeow86/zfs-dinit), the dinit, runit and s6 service scripts for ZFS (Artix) |
+| `zfs-openrc` | [sarahmeow86/zfs-openrc](https://github.com/sarahmeow86/zfs-openrc), the OpenRC service scripts for ZFS (Artix) |
+| `zfs-dinit`, `zfs-runit`, `zfs-s6` | [sarahmeow86/zfs-dinit](https://github.com/sarahmeow86/zfs-dinit), the dinit, runit and s6 service scripts for ZFS (Artix) |
 
 ## Versions
 
@@ -27,7 +27,7 @@ serve offline; `freedomnas-webui` depends on it and writes its own version to
 ## linux-freedomnas
 
 The kernel with the OpenZFS modules built in has a repository of its own,
-[linux-freedomnas](https://codeberg.org/FreedomNAS/linux-freedomnas); it is
+[linux-freedomnas](https://github.com/FreedomNAS/linux-freedomnas); it is
 built and published with the scripts here, from a checkout next to this one.
 
 ## Building
@@ -48,55 +48,60 @@ and the CI calls it directly.
 
 ## Publishing
 
+The repository is kept as the assets of this GitHub repository's releases:
+`pacman-dev` for snapshots, `pacman-main` for releases (ADR-003 in
+freedomnas-specs).
+
 ```sh
-CODEBERG_USER=<user> CODEBERG_TOKEN=<token> bin/publish-codeberg.sh
-GROUP=main ... bin/publish-codeberg.sh out/freedomnas-core-1.0-1-any.pkg.tar.zst
+GH_TOKEN=<token> bin/publish-github.sh
+GROUP=main GH_TOKEN=<token> bin/publish-github.sh out/freedomnas-core-0.9.20-1-any.pkg.tar.zst
 ```
 
-The token needs the `package` scope (write), and gpg must hold the signing
-key (its public half is `keys/freedomnas-arch.asc`, fingerprint
-`015549123DF4D6D5ADBE4179522C9783DC389A3B`). `GROUP` is the channel: `dev`
-for snapshots, `main` for releases. A package already in the channel at the
-same file name is skipped.
+The token must be able to write this repository's releases, and gpg must
+hold the signing key (its public half is `keys/freedomnas-arch.asc`,
+fingerprint `807A4D2EBFBED77AB609AB0B78840464DBE24D08`). `GROUP` is the
+channel. A package already in the release at the same file name is skipped.
 
 The script signs each new package, adds it to the channel's `freedomnas.db`
 with `repo-add --sign` (which also replaces the entry of the version it
 supersedes), uploads the packages and their signatures, then replaces the
 database and the files list, and finally deletes the files of the superseded
-versions. Codeberg's generic registry does not overwrite a file, so the
-database is deleted and uploaded again; a `pacman -Sy` in that instant gets a
-404 and only needs repeating. The registry's own Arch type is not used: it
-writes every package's file list into the `.db` and cuts it at 65535 bytes,
-so the kernel's entry ends mid-path and pacman discards the whole repository.
-`repo-add` keeps file lists in `freedomnas.files`, as Arch's repositories do.
+versions. `repo-add` keeps file lists in `freedomnas.files`, as Arch's
+repositories do. GitHub renames assets whose name holds characters other
+than letters, digits and `._+-`, so the script refuses such a package.
 
 On a FreedomNAS machine:
 
 ```
 [freedomnas]
 SigLevel = Required
-Server = https://codeberg.org/api/packages/FreedomNAS/generic/freedomnas-arch/dev
+Server = https://github.com/FreedomNAS/freedomnas-arch/releases/download/pacman-dev
 ```
 
 after importing the key
-(`https://codeberg.org/api/packages/FreedomNAS/generic/freedomnas-arch/dev/repository.key`)
+(`https://github.com/FreedomNAS/freedomnas-arch/releases/download/pacman-dev/repository.key`)
 with `pacman-key --add` and `pacman-key --lsign-key`.
 
-`.forgejo/workflows/publish-packages.yml` does the same daily and on demand,
-with the organization secrets `PACKAGE_REGISTRY_USER`,
-`PACKAGE_REGISTRY_TOKEN` and `ARCH_SIGNING_KEY` (the armored private key), in
-three jobs. `packages` runs on Codeberg's own runners: the five FreedomNAS
-packages, the community modules (`freedomnas-module-containers`, `freedomnas-module-proxy`, each from its own
-`dev` branch, or its newest tag on `main`), and `topgrade-bin`, `zfs-openrc`
-and `zfs-dinit`, and `caddy-bin` with `caddy-openrc`, `caddy-dinit`, `caddy-runit`
-(Caddy for Artix, which packages none: upstream's static build and a service
-per init, for the reverse proxy module), and `lego-bin` (lego for Artix, upstream's static build, for
-the proxy's Let's Encrypt certificates) when `bin/is-published.sh` does not find their version in the
-channel. `kernel-check` asks the same of linux-freedomnas on Codeberg's
-smallest runner, and `kernel` builds it on the self-hosted runner, where its
-ccache lives, only when it is missing, and only after `packages`: both
-rewrite the same repository database. With the self-hosted runner off, the
-packages are still published and only a new kernel waits.
+`.github/workflows/publish-packages.yml` does the same, with the
+organization secret `ARCH_SIGNING_KEY` (the armored private key), in four
+jobs. `packages` builds the five FreedomNAS packages, the community modules
+(`freedomnas-module-containers`, `freedomnas-module-proxy`, each from its
+own `dev` branch, or its newest tag on `main`), and `topgrade-bin`,
+`zfs-openrc` and `zfs-dinit`, and `caddy-bin` with `caddy-openrc`,
+`caddy-dinit`, `caddy-runit` (Caddy for Artix, which packages none:
+upstream's static build and a service per init, for the reverse proxy
+module), and `lego-bin` (lego for Artix, upstream's static build, for the
+proxy's Let's Encrypt certificates) when `bin/is-published.sh` does not find
+their version in the channel. `kernel-check` asks the same of
+linux-freedomnas, and `kernel` builds it only when it is missing, with its
+ccache kept by `actions/cache`. `publish` runs once at the end with what the
+others built, so the database is never rewritten twice at once.
+
+The workflow is started by `gather-pushes`, ten minutes after the last push
+to a component (each component's `notify-packages` sends a
+`repository_dispatch`, see freedomnas-deb's `docs/ci-setup.md`), every day
+as a safety net, or by hand. The Forgejo workflow under `.forgejo/` is
+switched off.
 
 ## License
 

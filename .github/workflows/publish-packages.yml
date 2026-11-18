@@ -1,4 +1,5 @@
 name: publish-packages
+run-name: ${{ github.workflow }} (${{ inputs.ref || 'dev' }})
 
 # Builds the FreedomNAS packages for Arch and Artix and publishes them as a
 # signed pacman repository in this repository's releases: pacman-dev for the

@@ -116,7 +116,7 @@ jobs:
       version: ${{ steps.check.outputs.version }}
     steps:
       - name: Install the tooling
-        run: pacman -Sy --noconfirm --needed git curl
+        run: pacman -Syu --noconfirm --needed git curl
 
       - name: Check out freedomnas-arch
         uses: actions/checkout@v4

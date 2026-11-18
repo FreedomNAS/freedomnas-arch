@@ -1,0 +1,204 @@
+name: publish-packages
+
+# Builds the FreedomNAS packages for Arch and Artix and publishes them as a
+# signed pacman repository in this repository's releases: pacman-dev for the
+# development snapshots, pacman-main for the releases
+# (bin/publish-github.sh).
+#
+#   dev   -> snapshots of every component's dev branch
+#   main  -> the newest release tag (vX.Y.Z)
+#
+# packages, kernel-check and kernel only build; publish runs once at the end
+# with everything they produced, so two jobs never rewrite the database at
+# once. A package already in the release is not uploaded again.
+#
+# Started by gather-pushes ten minutes after the last push to a component,
+# every day as a safety net, or by hand.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch of the component repositories to build (dev or main)"
+        type: string
+        default: dev
+  schedule:
+    - cron: "37 4 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-packages-${{ inputs.ref || 'dev' }}
+  cancel-in-progress: false
+
+env:
+  REF: ${{ inputs.ref || 'dev' }}
+  GROUP: ${{ inputs.ref == 'main' && 'main' || 'dev' }}
+  ORG_URL: https://github.com/FreedomNAS
+
+jobs:
+  packages:
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Install the tooling
+        run: pacman -Syu --noconfirm --needed git curl python
+
+      - name: Check out freedomnas-arch
+        uses: actions/checkout@v4
+
+      # A release is built from the newest release tag (vX.Y.Z, the same
+      # name in every FreedomNAS repository), not from the tip of main.
+      - name: Pick the ref to build
+        run: |
+          case "$REF" in dev|main) ;; *) echo "ref must be dev or main, not $REF" >&2; exit 1 ;; esac
+          ref="$REF"
+          if [ "$ref" = main ]; then
+            ref="$(git ls-remote --tags --refs "$ORG_URL/freedomnas-core.git" 'v*' \
+              | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+(\.[0-9]+)*$' | sort -V | tail -n 1)"
+            [ -n "$ref" ] || { echo "no release tag on freedomnas-core" >&2; exit 1; }
+          fi
+          echo "Building $ref"
+          echo "FREEDOMNAS_REF=$ref" >> "$GITHUB_ENV"
+
+      - name: Build the components
+        run: |
+          for pkg in freedomnas-profiles freedomnas-core freedomnas-docs freedomnas-webui freedomnas-installer; do
+            sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
+          done
+
+      # Community modules have versions of their own: dev builds their dev
+      # branch, main their own newest release tag, and a module with no tag
+      # yet is left out of main. FREEDOMNAS_REF is the module's ref here.
+      - name: Build the community modules
+        run: |
+          for repo in freedomnas-containers freedomnas-proxy; do
+            pkg="freedomnas-module-${repo#freedomnas-}"
+            ref=dev
+            if [ "$REF" = main ]; then
+              ref="$(git ls-remote --tags --refs "$ORG_URL/$repo.git" 'v*' \
+                | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+(\.[0-9]+)*$' | sort -V | tail -n 1)"
+              [ -n "$ref" ] || { echo "$repo has no release tag yet: not built for main"; continue; }
+            fi
+            echo "Building $pkg at $ref"
+            FREEDOMNAS_REF="$ref" sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
+          done
+
+      # Their PKGBUILDs fetch from Codeberg; the GitHub mirrors hold the same
+      # history.
+      - name: Check out the ZFS service scripts
+        run: |
+          for repo in zfs-openrc zfs-dinit; do
+            git clone --depth 1 "https://github.com/sarahmeow86/$repo" "$repo"
+            sed -i "s|https://codeberg.org/sarahmeow86/|https://github.com/sarahmeow86/|" "$repo/PKGBUILD"
+          done
+
+      - name: Build topgrade, Caddy and lego for Artix and the ZFS service scripts if not published yet
+        run: |
+          for pkg in topgrade-bin caddy-bin lego-bin zfs-openrc zfs-dinit; do
+            sh bin/is-published.sh "$pkg" || sh bin/build-inside.sh 1000 "$PWD/$pkg" "$PWD/out" "$PWD/work/$pkg"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages
+          path: out/*.pkg.tar.zst
+          if-no-files-found: error
+
+  kernel-check:
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:base-devel
+    outputs:
+      missing: ${{ steps.check.outputs.missing }}
+      version: ${{ steps.check.outputs.version }}
+    steps:
+      - name: Install the tooling
+        run: pacman -Sy --noconfirm --needed git curl
+
+      - name: Check out freedomnas-arch
+        uses: actions/checkout@v4
+
+      - name: Is this kernel version published?
+        id: check
+        run: |
+          git clone --depth 1 --branch dev "$ORG_URL/linux-freedomnas.git" linux-freedomnas
+          echo "version=$(bash -c 'source linux-freedomnas/PKGBUILD >/dev/null 2>&1; echo "$pkgver-$pkgrel"')" >> "$GITHUB_OUTPUT"
+          if sh bin/is-published.sh linux-freedomnas; then
+            echo "missing=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "missing=yes" >> "$GITHUB_OUTPUT"
+          fi
+
+  kernel:
+    needs: kernel-check
+    if: needs.kernel-check.outputs.missing == 'yes'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 350
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Install the tooling
+        run: pacman -Syu --noconfirm --needed git curl python zstd tar ccache
+
+      - name: Check out freedomnas-arch
+        uses: actions/checkout@v4
+
+      - name: Restore the ccache
+        uses: actions/cache@v4
+        with:
+          path: /ccache
+          key: ccache-kernel-arch-${{ needs.kernel-check.outputs.version }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-kernel-arch-${{ needs.kernel-check.outputs.version }}-
+            ccache-kernel-arch-
+
+      - name: Build the kernel
+        run: |
+          git clone --depth 1 --branch dev "$ORG_URL/linux-freedomnas.git" linux-freedomnas
+          CCACHE_DIR=/ccache MAKEFLAGS="-j$(nproc)" sh bin/build-inside.sh 1000 "$PWD/linux-freedomnas" "$PWD/out" "$PWD/work/linux-freedomnas"
+
+      - name: Make the ccache readable for the cache upload
+        if: always()
+        run: chmod -R a+rX /ccache || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kernel
+          path: out/*.pkg.tar.zst
+          if-no-files-found: error
+
+  publish:
+    needs: [packages, kernel]
+    if: >-
+      always() && needs.packages.result == 'success'
+      && needs.kernel.result != 'failure' && needs.kernel.result != 'cancelled'
+    runs-on: ubuntu-24.04
+    container:
+      image: archlinux:base-devel
+    steps:
+      - name: Install the tooling
+        run: pacman -Syu --noconfirm --needed git curl gnupg github-cli
+
+      - name: Check out freedomnas-arch
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+
+      - name: Import the signing key
+        env:
+          ARCH_SIGNING_KEY: ${{ secrets.ARCH_SIGNING_KEY }}
+        run: |
+          [ -n "$ARCH_SIGNING_KEY" ] || { echo "the ARCH_SIGNING_KEY secret is not set" >&2; exit 1; }
+          printf '%s\n' "$ARCH_SIGNING_KEY" | gpg --batch --quiet --import
+
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: sh bin/publish-github.sh

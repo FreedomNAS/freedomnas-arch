@@ -8,7 +8,7 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc="Containers for FreedomNAS: Docker on its own ZFS datasets, apps and a catalogue"
 arch=('any')
-url="https://codeberg.org/FreedomNAS/freedomnas-containers"
+url="https://github.com/FreedomNAS/freedomnas-containers"
 license=('MPL-2.0')
 depends=('freedomnas-core>0.9.12' 'freedomnas-webui>0.9.12' 'docker' 'docker-compose' 'containerd')
 makedepends=(git)
@@ -16,7 +16,7 @@ case "${_ref}" in
     v[0-9]*) _fragment="tag=${_ref}" ;;
     *) _fragment="branch=${_ref}" ;;
 esac
-source=("git+https://codeberg.org/FreedomNAS/${_repo}.git#${_fragment}")
+source=("git+https://github.com/FreedomNAS/${_repo}.git#${_fragment}")
 sha256sums=('SKIP')
 
 pkgver() {

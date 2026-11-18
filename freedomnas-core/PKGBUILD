@@ -6,7 +6,7 @@ pkgver=0.9.20
 pkgrel=1
 pkgdesc="FreedomNAS Core Engine — OS-agnostic storage appliance"
 arch=('any')
-url="https://codeberg.org/freedomnas/freedomnas-core"
+url="https://github.com/FreedomNAS/freedomnas-core"
 license=('MPL-2.0')
 depends=(
     'freedomnas-profiles'
@@ -23,7 +23,7 @@ case "${_ref}" in
     v[0-9]*) _fragment="tag=${_ref}" ;;
     *) _fragment="branch=${_ref}" ;;
 esac
-source=("git+https://codeberg.org/FreedomNAS/freedomnas-core.git#${_fragment}")
+source=("git+https://github.com/FreedomNAS/freedomnas-core.git#${_fragment}")
 sha256sums=('SKIP')
 
 pkgver() {

@@ -6,7 +6,7 @@ pkgver=0.9.20
 pkgrel=1
 pkgdesc="FreedomNAS documentation, for reading offline in the WebUI"
 arch=('any')
-url="https://codeberg.org/FreedomNAS/freedomnas-docs"
+url="https://github.com/FreedomNAS/freedomnas-docs"
 license=('MPL-2.0' 'OFL-1.1')
 depends=()
 makedepends=(git mkdocs mkdocs-material python-pymdown-extensions)
@@ -14,7 +14,7 @@ case "${_ref}" in
     v[0-9]*) _fragment="tag=${_ref}" ;;
     *) _fragment="branch=${_ref}" ;;
 esac
-source=("git+https://codeberg.org/FreedomNAS/freedomnas-docs.git#${_fragment}")
+source=("git+https://github.com/FreedomNAS/freedomnas-docs.git#${_fragment}")
 sha256sums=('SKIP')
 
 pkgver() {

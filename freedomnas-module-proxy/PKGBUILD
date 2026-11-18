@@ -8,7 +8,7 @@ pkgver=0.1.0
 pkgrel=1
 pkgdesc="Reverse proxy for FreedomNAS: Caddy with HTTPS for every web app"
 arch=('any')
-url="https://codeberg.org/FreedomNAS/freedomnas-proxy"
+url="https://github.com/FreedomNAS/freedomnas-proxy"
 license=('MPL-2.0')
 depends=('freedomnas-core>0.9.12' 'freedomnas-webui>0.9.12' 'caddy' 'lego')
 makedepends=(git)
@@ -16,7 +16,7 @@ case "${_ref}" in
     v[0-9]*) _fragment="tag=${_ref}" ;;
     *) _fragment="branch=${_ref}" ;;
 esac
-source=("git+https://codeberg.org/FreedomNAS/${_repo}.git#${_fragment}")
+source=("git+https://github.com/FreedomNAS/${_repo}.git#${_fragment}")
 sha256sums=('SKIP')
 
 pkgver() {

@@ -16,6 +16,7 @@ name: publish-packages
 #                lives. It waits for packages: both rewrite the same
 #                repository database, and two publishes at once would lose
 #                one of them.
+# Switched off: the packages are built on GitHub (.github/workflows/).
 on:
   workflow_dispatch:
     inputs:
@@ -23,8 +24,6 @@ on:
         description: "Branch of the component repositories to build"
         type: string
         default: dev
-  schedule:
-    - cron: "37 4 * * *"
 
 jobs:
   packages:

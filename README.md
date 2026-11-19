@@ -105,8 +105,7 @@ others built, so the database is never rewritten twice at once.
 The workflow is started by `gather-pushes`, ten minutes after the last push
 to a component (each component's `notify-packages` sends a
 `repository_dispatch`, see freedomnas-deb's `docs/ci-setup.md`), every day
-as a safety net, or by hand. The Forgejo workflow under `.forgejo/` is
-switched off.
+as a safety net, or by hand.
 
 ## License
 

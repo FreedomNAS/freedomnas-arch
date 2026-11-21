@@ -8,7 +8,7 @@ repository's releases. `freedomnas-deb` is the Debian counterpart.
 |---------|--------|
 | `freedomnas-core`, `freedomnas-profiles`, `freedomnas-docs`, `freedomnas-webui`, `freedomnas-installer` | the component repositories on GitHub, at a branch or a release tag (`dev` by default, `FREEDOMNAS_REF` to change it: `main`, or a tag such as `v0.9.10`) |
 | `linux-freedomnas`, `linux-freedomnas-headers`, `zfs-utils-freedomnas` | [linux-freedomnas](https://github.com/FreedomNAS/linux-freedomnas): Arch's `linux-lts` and OpenZFS, built together |
-| `topgrade-bin` | `topgrade-bin/` here: upstream's statically linked musl release binary, as freedomnas-deb ships it; topgrade is in neither Arch's nor Artix's repositories, and building it pulls the Rust toolchain |
+| `topgrade` | `topgrade/` here: built from source after the AUR's PKGBUILD, without the self-update feature of upstream's release binary (which tries to replace itself and waits for an answer the WebUI cannot give); topgrade is in neither Arch's nor Artix's repositories. It replaces the old `topgrade-bin` |
 | `zfs-openrc` | [sarahmeow86/zfs-openrc](https://github.com/sarahmeow86/zfs-openrc), the OpenRC service scripts for ZFS (Artix) |
 | `zfs-dinit`, `zfs-runit`, `zfs-s6` | [sarahmeow86/zfs-dinit](https://github.com/sarahmeow86/zfs-dinit), the dinit, runit and s6 service scripts for ZFS (Artix) |
 
@@ -91,7 +91,7 @@ is a new `pkgver` of `freedomnas-keyring` (its files are made with
 organization secret `ARCH_SIGNING_KEY` (the armored private key), in four
 jobs. `packages` builds the five FreedomNAS packages, the community modules
 (`freedomnas-module-containers`, `freedomnas-module-proxy`, each from its
-own `dev` branch, or its newest tag on `main`), and `topgrade-bin`,
+own `dev` branch, or its newest tag on `main`), and `topgrade`,
 `zfs-openrc` and `zfs-dinit`, and `caddy-bin` with `caddy-openrc`,
 `caddy-dinit`, `caddy-runit` (Caddy for Artix, which packages none:
 upstream's static build and a service per init, for the reverse proxy
